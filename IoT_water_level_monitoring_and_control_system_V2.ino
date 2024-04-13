@@ -48,21 +48,27 @@ void checkBlynkStatus() {
 }
 
 BLYNK_WRITE(VPIN_BUTTON_3) {
-  modeFlag = param.asInt();
-  if (!modeFlag && toggleRelay) {
-    digitalWrite(Relay, LOW);
-    toggleRelay = false;
+  if (param.asInt() == 1) {
+    modeFlag = true;
+    currMode = "AUTO";
+    trackStateMode = 1;
+  } else {
+    modeFlag = false;
+    currMode = "MANUAL";
+    if ((trackStateMode + 1) == 2) {  //Track the initial state of the manual mode activation only and reset the relay to LOW
+      digitalWrite(Relay, LOW);
+      trackStateMode = 0;  //restore the state.
+    }
   }
-  currMode = modeFlag ? "AUTO" : "MANUAL";
   Serial.print(currMode);
-  displayData(); // Update LCD with the new mode
+  displayData();  // Update LCD with the new mode
 }
 
 BLYNK_WRITE(VPIN_BUTTON_4) {
-  if (!modeFlag) {
-    toggleRelay = param.asInt();
+  toggleRelay = param.asInt();  //this was brought from the block of the below if(!modeFLag) to this position because it has to be recording every actions of virtual pin button state regardless of if/else condition.
+  if (!modeFlag) {  //if manual mode is set, then this code block executes.
     digitalWrite(Relay, toggleRelay);
-  } else {
+  } else {  //else, ON/OFF virtual indicator to signify that Auto Mode is running.
     Blynk.virtualWrite(V_B_4, toggleRelay);
   }
 }
